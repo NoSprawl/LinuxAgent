@@ -18,10 +18,10 @@ module NoSPrint
       
       def package_manager_bridge
         # Check for homebrew
-        if !%x("brew").nil?
+        if %x("brew") != ""
           @@package_manager_name = "homebrew"
           return HomebrewPackageManagerBridge
-        elsif !%x("aptitude")
+        elsif %x("apt-get") != ""
           @@package_manager_name = "aptitude"
           return AptitudePackageManagerBridge
         end
