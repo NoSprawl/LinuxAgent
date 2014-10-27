@@ -21,6 +21,9 @@ module NoSPrint
         if !%x("brew").nil?
           @@package_manager_name = "homebrew"
           return HomebrewPackageManagerBridge
+        elsif !%x("aptitude")
+          @@package_manager_name = "aptitude"
+          return AptitudePackageManagerBridge
         end
         
       end
