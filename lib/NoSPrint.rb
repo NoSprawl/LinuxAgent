@@ -41,6 +41,12 @@ module NoSPrint
       @name
     end
     
+    def safe
+      {:name => name,
+       :installed_version => installed_version,
+       :latest_version => latest_version}
+    end
+    
     def installed_version
       Config.package_manager_bridge.version self
     end

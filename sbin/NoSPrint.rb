@@ -1,7 +1,10 @@
 require 'pp'
 require 'colorize'
 require 'mongo'
+require 'aws-sdk'
 require_relative '../lib/NoSPrint'
+
+AWS.config access_key_id: 'AKIAIWYYTQXMVI4ZALOA', secret_access_key: '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'
 
 $mongo_client = Mongo::MongoClient.new("linus.mongohq.com", 10026)
 $db = $mongo_client.db "nosprawl_vulnerabilities"
@@ -79,13 +82,28 @@ startSpinner
 
 $vulnerabilities = 0
 
+sqs = AWS::SQS.new
+queue = sqs.queues["https://sqs.us-east-1.amazonaws.com/480589117377/nosprawl_agents"]
+
+$count22 = 0
+
 $all_packages.each do |package|
+  $count22 += 1
+  
   $collection.find({'product' => package.name, 'version' => package.installed_version}).each do |document|
     puts "VULNERABILITY FOUND"
+    # here is where we modify $all_packages[$count22] to have vulnerability information
     $vulnerabilities += 1
   end
   
 end
+
+$json_packages = []
+$all_packages.each do |package|
+  $json_packages << package.safe
+end
+
+queue.send_message({job: "ProcessAgentReport", data: {message: $json_packages}}.to_json)
 
 $spinner_on = false
 puts ""
