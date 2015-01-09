@@ -2,6 +2,8 @@ require 'pp'
 require 'colorize'
 require 'mongo'
 require 'aws-sdk'
+require 'macaddr'
+
 require_relative '../lib/NoSPrint'
 
 AWS.config access_key_id: 'AKIAIWYYTQXMVI4ZALOA', secret_access_key: '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'
@@ -22,7 +24,7 @@ print ("%s (%s)\n" % [NoSPrint::Config.package_manager_name,
                       NoSPrint::Config.operating_system_info]).yellow
 
 $spinner_on = false
-$spinner_frames = ["|", "/", "-", "\\"]
+$spinner_frames = ["||", "//", "==", "\\\\"]
 $spinner_index = 0
 
 def startSpinner
@@ -103,7 +105,17 @@ $all_packages.each do |package|
   $json_packages << package.safe
 end
 
-queue.send_message({job: "ProcessAgentReport", data: {message: $json_packages}}.to_json)
+final_list = []
+addrs = Mac.addr
+if addrs.is_a?(String)
+  final_list << addrs
+else
+  final_list = addrs
+end
+
+wrapper = {packages: $json_packages, network: final_list}
+
+queue.send_message({job: "ProcessAgentReport", data: {message: wrapper}}.to_json)
 
 $spinner_on = false
 puts ""

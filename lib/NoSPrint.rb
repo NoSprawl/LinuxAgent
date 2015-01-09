@@ -1,3 +1,5 @@
+require 'socket'
+
 module NoSPrint
   class Config
     class << self
