@@ -58,7 +58,7 @@ $all_packages.each do |package|
   $all_packages_bare << package.name
   print ((100 * $total / $fulltotal).to_s + "%").green + "\r"
   
-  puts "#{package.name} installed: #{package.installed_version}, latest: #{package.latest_version}"
+  #puts "#{package.name} installed: #{package.installed_version}, latest: #{package.latest_version}"
     
   if package.installed_version != package.latest_version
     $outofdate += 1

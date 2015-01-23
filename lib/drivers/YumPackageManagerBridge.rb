@@ -4,9 +4,14 @@ class YumPackageManagerBridge < NoSPrint::PackageManagerBridge
       "yum"
     end
 
-    def allPackages info = false
+    def allPackages info = false, ret = :currently_installed_version
       native = []
-      raw_yum_by_line = `yum list installed`.split("\n")
+      if ret == :currently_installed_version
+        raw_yum_by_line = `yum list installed`.split("\n")
+      elsif ret == :latest_available_version
+        raw_yum_by_line = `yum list available`.split("\n")
+      end
+
       raw_yum_by_line.each do |line|
         version_info_items = /^(\S+)\s+(\S+)\s+(\S+)/.match(line)
         next if version_info_items.nil?
@@ -24,8 +29,15 @@ class YumPackageManagerBridge < NoSPrint::PackageManagerBridge
       return native
     end
     
-    def version package
-      allPackages(true).each do |package_listing|
+    def version package, latest = false
+      res = nil
+      if !latest
+        res = allPackages true
+      else
+        res = allPackages true, :latest_available_version
+      end
+
+      res.each do |package_listing|
         if package_listing[:package_name] == package
           return package_listing[:package_version]
         end
@@ -35,7 +47,7 @@ class YumPackageManagerBridge < NoSPrint::PackageManagerBridge
     end
 
     def latest_version package
-      version package
+      version package, true
     end
 
   end
