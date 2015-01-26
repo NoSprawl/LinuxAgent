@@ -5,6 +5,7 @@ require 'aws-sdk'
 require 'macaddr'
 
 require_relative '../lib/NoSPrint'
+require_relative '../lib/NoSCache'
 
 AWS.config access_key_id: 'AKIAIWYYTQXMVI4ZALOA', secret_access_key: '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'
 
@@ -57,9 +58,7 @@ $all_packages.each do |package|
   print " Analyzing installed packages: ".blue
   $all_packages_bare << package.name
   print ((100 * $total / $fulltotal).to_s + "%").green + "\r"
-  
-  puts "#{package.name} installed: #{package.installed_version}, latest: #{package.latest_version}"
-    
+      
   if package.installed_version != package.latest_version
     $outofdate += 1
   else

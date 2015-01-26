@@ -17,11 +17,36 @@ class HomebrewPackageManagerBridge < NoSPrint::PackageManagerBridge
     
     def version package
       result = `brew info #{package.name}`
-      /[0-9]+\.[0-9]+([\.][0-9])*/.match(result.split("\n")[2])[0] rescue result.split("\n").first
+      lines = result.split("\n")
+      matched_line = nil
+      line_index = 0
+      until !matched_line.nil?
+        matched = nil
+        
+        begin
+          matched = /[\w][\/]([[\d[\w]]|[\.|\_]]+[\d|[\.|\_]|])\s/.match(lines[line_index])
+        rescue e
+          matched = /[\/]([[\d[\w]]|[\.|\_]]+[\d|[\.|\_]|])\s\(.+\)\s[*]/.match(lines[line_index])
+        end
+        
+        if !matched.nil?
+          matched_line = matched[1]
+          return matched_line
+        end
+        
+        line_index += 1
+        
+        if line_index == lines.length
+          matched_line = false
+        end
+        
+      end
+      
+      return "UNPARSABLE"
     end
     
     def latest_version package
-      result = `brew outdated --verbose`
+      result = `brew outdated --verbose` # shout out to skip wilson
       ret = nil
       result.split("\n").each do |raw_pkg|
         vsplit = raw_pkg.split(' < ')
