@@ -50,12 +50,17 @@ module NoSPrint
   end
   
   class Package
-    def initialize name
+    def initialize name, version = nil
       @name = name
+      @version = version
     end
     
     def name
       @name
+    end
+
+    def version
+      @version
     end
     
     def safe

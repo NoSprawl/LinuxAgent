@@ -4,50 +4,48 @@ class YumPackageManagerBridge < NoSPrint::PackageManagerBridge
       "yum"
     end
 
-    def allPackages info = false, ret = :currently_installed_version
-      native = []
-      if ret == :currently_installed_version
-        raw_yum_by_line = `yum list installed`.split("\n")
-      elsif ret == :latest_available_version
-        raw_yum_by_line = `yum list available`.split("\n")
+    def sanitize_version_number version_number
+      if version_number.include?('amzn1')
+        return version_number
+      else
+        return version_number
       end
 
-      raw_yum_by_line.each do |line|
-        version_info_items = /^(\S+)\s+(\S+)\s+(\S+)/.match(line)
-        next if version_info_items.nil?
-        package_name = version_info_items[0].split(".")[0]
-        package_architecture = version_info_items[0].split(".")[1]
-        package_version = version_info_items[1].split(".")[0]
-        package_meta = (verion_info_items[1].split(".")[1] rescue "")
-        native << NoSPrint::Package.new(package_name) unless info
-        native << {package_name: package_name,
-                   package_architecture: package_architecture,
-                   package_version: package_version,
-                   package_meta: package_meta} if info
+    end
+
+    def allPackages
+      collection = []
+      `yum list installed`.scan(/^([\S]+)\.[\S]+[\s]+([\S|\.]+)/).each do |pair|
+        version_number = pair.last
+        version_number = sanitize_version_number version_number
+
+        product_name = pair.first
+        collection << NoSPrint::Package.new(product_name, version_number)
       end
-      
-      return native
+
+      return collection
     end
     
-    def version package, latest = false
-      res = nil
-      if !latest
-        res = allPackages true
-      else
-        res = allPackages true, :latest_available_version
-      end
+    def version package
+      `yum list available`.scan(/^([\S]+)\.[\S]+[\s]+([\S|\.]+)/).each do |pair|
+        version_number = pair.last
+        version_number = sanitize_version_number version_number
 
-      res.each do |package_listing|
-        if package_listing[:package_name] == package
-          return package_listing[:package_version]
+        package_version_number = package.version
+        package_version_number = sanitize_version_number package.version
+
+        if package.name == pair.first
+          return package.version
         end
 
       end
 
+      return "unknown"
+
     end
 
     def latest_version package
-      version package, true
+      version package
     end
 
   end
