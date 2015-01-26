@@ -1,11 +1,12 @@
 require 'socket'
+require 'pry'
 
 module NoSPrint
   class Config
     class << self
       def load_drivers
         Dir.entries(File.dirname(__FILE__) + "/drivers").each do |file|
-          require_relative "drivers/%s" % file if file[0] != "."
+          require_relative "drivers/%s" % file if file[0] != "." && !file.include?('~')
         end
     
       end
@@ -19,13 +20,27 @@ module NoSPrint
       end
       
       def package_manager_bridge
-        # Check for homebrew
-        if %x("brew") != ""
+        begin
+          `brew`
           @@package_manager_name = "homebrew"
           return HomebrewPackageManagerBridge
-        elsif %x("apt-get") != ""
-          @@package_manager_name = "aptitude"
-          return AptitudePackageManagerBridge
+        rescue
+          begin
+            `aptitude`
+            @@package_manager_name = "aptitude"
+            return AptitudePackageManagerBridge
+          rescue
+            begin
+              `yum --version`
+              @@package_manager_name = "yum"
+              return YumPackageManagerBridge
+            rescue
+              # quick hack to kill the whole app.
+              exec 'echo If you got here we don\'t support your package manager'
+            end
+
+          end
+
         end
         
       end
@@ -35,12 +50,17 @@ module NoSPrint
   end
   
   class Package
-    def initialize name
+    def initialize name, version = nil
       @name = name
+      @version = version
     end
     
     def name
       @name
+    end
+
+    def version
+      @version
     end
     
     def safe
